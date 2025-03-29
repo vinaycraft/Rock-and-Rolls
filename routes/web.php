@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,22 +16,22 @@ use App\Http\Controllers\OrderController;
 */
 
 // Admin Routes
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->group(function () {
     // Guest admin routes
     Route::middleware('guest:admin')->group(function () {
-        Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
-        Route::get('/forgot-password', [AdminAuthController::class, 'showForgotPassword'])->name('password.request');
-        Route::post('/forgot-password', [AdminAuthController::class, 'sendResetLink'])->name('password.email');
+        Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+        Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+        Route::get('/forgot-password', [AdminAuthController::class, 'showForgotPassword'])->name('admin.password.request');
+        Route::post('/forgot-password', [AdminAuthController::class, 'sendResetLink'])->name('admin.password.email');
     });
     
     // Protected admin routes
     Route::middleware(['auth:admin'])->group(function () {
-        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
-        })->name('dashboard');
-        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+        })->name('admin.dashboard');
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
     });
 });
 
@@ -39,7 +40,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/', function () {
         return view('welcome');
-    });
+    })->name('home');
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('customer.login');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -55,6 +56,11 @@ Route::middleware('auth')->group(function () {
     // Menu Routes
     Route::get('/menu', [MenuController::class, 'index'])->name('menu');
     
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
     // Cart Routes
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart/add/{dish}', [CartController::class, 'add'])->name('cart.add');
@@ -63,6 +69,9 @@ Route::middleware('auth')->group(function () {
     // Order Routes
     Route::get('/my-orders', [OrderController::class, 'index'])->name('my-orders');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders', function () {
+        return view('orders');
+    })->name('orders');
 });
 
 // Public Routes

@@ -1,14 +1,16 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <h2 class="mb-4">Analytics</h2>
 
     <div class="row">
         <!-- Daily Revenue Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header">Daily Revenue (Last 7 Days)</div>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Daily Revenue (Last 7 Days)</h5>
+                </div>
                 <div class="card-body">
                     <canvas id="dailyRevenueChart"></canvas>
                 </div>
@@ -18,7 +20,9 @@
         <!-- Monthly Revenue Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header">Monthly Revenue (Last 6 Months)</div>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Revenue (Last 6 Months)</h5>
+                </div>
                 <div class="card-body">
                     <canvas id="monthlyRevenueChart"></canvas>
                 </div>
@@ -28,7 +32,9 @@
         <!-- Top Selling Dishes -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header">Top Selling Dishes</div>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top Selling Dishes</h5>
+                </div>
                 <div class="card-body">
                     <canvas id="topDishesChart"></canvas>
                 </div>
@@ -38,7 +44,9 @@
         <!-- Weekly Revenue Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header">Weekly Revenue (Last 4 Weeks)</div>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Weekly Revenue (Last 4 Weeks)</h5>
+                </div>
                 <div class="card-body">
                     <canvas id="weeklyRevenueChart"></canvas>
                 </div>
@@ -61,6 +69,14 @@
                 borderColor: 'rgb(75, 192, 192)',
                 tension: 0.1
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
         }
     });
 
@@ -74,6 +90,14 @@
                 data: {!! json_encode($monthlyRevenue->pluck('revenue')) !!},
                 backgroundColor: 'rgba(54, 162, 235, 0.5)'
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
         }
     });
 
@@ -92,6 +116,14 @@
                     'rgba(153, 102, 255, 0.5)'
                 ]
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
         }
     });
 
@@ -103,9 +135,17 @@
             datasets: [{
                 label: 'Weekly Revenue',
                 data: {!! json_encode($weeklyRevenue->pluck('revenue')) !!},
-                borderColor: 'rgb(255, 99, 132)',
+                borderColor: 'rgb(153, 102, 255)',
                 tension: 0.1
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
         }
     });
 </script>
