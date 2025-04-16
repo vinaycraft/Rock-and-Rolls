@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -19,9 +17,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'phone_number',
+        'mobile',
         'password',
-        'is_admin',
     ];
 
     /**
@@ -35,19 +32,15 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'is_admin' => 'boolean',
-    ];
-
-    /**
      * Get the orders for the user.
      */
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function username()
+    {
+        return 'mobile';
     }
 }

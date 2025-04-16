@@ -1,34 +1,65 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container py-4">
     <h2 class="mb-4">Our Menu</h2>
+
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <div class="row">
         @foreach($dishes as $dish)
-            <div class="col-md-4 mb-4">
+            <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card h-100">
                     @if($dish->image_path)
-                        <img src="{{ asset($dish->image_path) }}" class="card-img-top" alt="{{ $dish->name }}">
+                        <img src="{{ Storage::url($dish->image_path) }}" 
+                             class="card-img-top" 
+                             alt="{{ $dish->name }}"
+                             style="height: 200px; object-fit: cover;">
+                    @else
+                        <div class="bg-light d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="fas fa-pizza-slice fa-3x text-muted"></i>
+                        </div>
                     @endif
+
                     <div class="card-body">
                         <h5 class="card-title">{{ $dish->name }}</h5>
-                        <p class="card-text">{{ $dish->description }}</p>
-                        <p class="card-text"><strong>₹{{ number_format($dish->price, 2) }}</strong></p>
-                        <form action="{{ route('cart.add', $dish->id) }}" method="POST">
+                        <p class="card-text text-muted">{{ $dish->description }}</p>
+
+                        <form action="{{ route('cart.add', $dish) }}" method="POST">
                             @csrf
-                            <div class="input-group">
-                                <button type="button" class="btn btn-outline-secondary decrease-quantity" onclick="decreaseQuantity(this)">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" name="quantity" class="form-control text-center quantity-input" 
-                                       value="1" min="1" max="10" readonly>
-                                <button type="button" class="btn btn-outline-secondary increase-quantity" onclick="increaseQuantity(this)">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-cart-plus"></i> Add
-                                </button>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               name="has_cheese" id="cheese_{{ $dish->id }}"
+                                               onchange="updatePrice(this, {{ $dish->id }}, {{ $dish->base_price }}, {{ $dish->price_with_cheese }})">
+                                        <label class="form-check-label" for="cheese_{{ $dish->id }}">
+                                            Extra Cheese
+                                        </label>
+                                    </div>
+                                    <span class="text-primary" id="price_{{ $dish->id }}">
+                                        ₹{{ number_format($dish->base_price, 2) }}
+                                    </span>
+                                </div>
+
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="quantity" 
+                                           value="1" min="1" max="10">
+                                    <button type="submit" class="btn btn-primary">
+                                        Add to Cart
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -38,36 +69,13 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
-function decreaseQuantity(button) {
-    const input = button.parentElement.querySelector('.quantity-input');
-    const currentValue = parseInt(input.value);
-    if (currentValue > 1) {
-        input.value = currentValue - 1;
-    }
-}
-
-function increaseQuantity(button) {
-    const input = button.parentElement.querySelector('.quantity-input');
-    const currentValue = parseInt(input.value);
-    if (currentValue < 10) {
-        input.value = currentValue + 1;
-    }
+function updatePrice(checkbox, dishId, basePrice, priceWithCheese) {
+    const priceElement = document.getElementById('price_' + dishId);
+    const price = checkbox.checked ? priceWithCheese : basePrice;
+    priceElement.textContent = '₹' + price.toFixed(2);
 }
 </script>
-
-<style>
-.quantity-input {
-    max-width: 60px;
-    border-radius: 0;
-}
-
-.input-group .btn {
-    z-index: 0;
-}
-
-.decrease-quantity, .increase-quantity {
-    padding: 0.375rem 0.75rem;
-}
-</style>
+@endpush
 @endsection

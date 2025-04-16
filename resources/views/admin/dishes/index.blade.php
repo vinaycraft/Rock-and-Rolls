@@ -1,173 +1,269 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('content')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Menu Management</h2>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDishModal">
-            Add New Dish
-        </button>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Menu Management</h1>
+        <a href="{{ route('admin.dishes.create') }}" class="btn btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm me-2"></i>Add New Dish
+        </a>
     </div>
 
+    <!-- Alerts -->
     @if(session('success'))
-        <div class="alert alert-success">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
+    <!-- Content -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h6 class="m-0 font-weight-bold text-primary">All Menu Items</h6>
+                </div>
+            </div>
         </div>
-    @endif
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">All Dishes</h5>
-        </div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style="width: 45%">Dish Details</th>
+                        <th style="width: 20%">Price</th>
+                        <th style="width: 20%">Status</th>
+                        <th style="width: 15%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($dishes as $dish)
                         <tr>
-                            <td>{{ $dish->name }}</td>
-                            <td>{{ Str::limit($dish->description, 50) }}</td>
-                            <td>₹{{ number_format($dish->price, 2) }}</td>
-                            <td>{{ ucfirst($dish->category) }}</td>
                             <td>
-                                <span class="badge bg-{{ $dish->is_available ? 'success' : 'danger' }}">
-                                    {{ $dish->is_available ? 'Available' : 'Not Available' }}
-                                </span>
+                                <div class="d-flex align-items-center py-2">
+                                    @if($dish->image_path)
+                                        <div class="flex-shrink-0">
+                                            <img src="{{ Storage::url($dish->image_path) }}" 
+                                                 alt="{{ $dish->name }}" 
+                                                 class="rounded-circle border" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        </div>
+                                    @else
+                                        <div class="flex-shrink-0 rounded-circle border bg-light d-flex align-items-center justify-content-center" 
+                                             style="width: 50px; height: 50px;">
+                                            <i class="fas fa-utensils text-secondary"></i>
+                                        </div>
+                                    @endif
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">{{ $dish->name }}</h6>
+                                        <div class="d-flex align-items-center flex-wrap gap-2">
+                                            <span class="badge {{ $dish->category == 'veg' ? 'bg-success' : 'bg-danger' }}">
+                                                <i class="fas {{ $dish->category == 'veg' ? 'fa-leaf' : 'fa-drumstick-bite' }} me-1"></i>
+                                                {{ ucfirst($dish->category) }}
+                                            </span>
+                                            @if($dish->description)
+                                                <small class="text-muted">{{ Str::limit($dish->description, 60) }}</small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editDishModal{{ $dish->id }}">
-                                    Edit
-                                </button>
-                                <form action="{{ route('admin.dishes.delete', $dish) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                </form>
+                                <div class="d-flex flex-column">
+                                    <div class="fw-bold">
+                                        <i class="fas fa-rupee-sign me-1 opacity-75"></i>{{ number_format($dish->base_price, 2) }}
+                                    </div>
+                                    @if($dish->has_cheese_variant)
+                                        <div class="small text-muted mt-1">
+                                            <i class="fas fa-cheese me-1"></i>
+                                            ₹{{ number_format($dish->price_with_cheese, 2) }}
+                                        </div>
+                                    @endif
+                                </div>
                             </td>
-                        </tr>
-
-                        <!-- Edit Dish Modal -->
-                        <div class="modal fade" id="editDishModal{{ $dish->id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form action="{{ route('admin.dishes.update', $dish) }}" method="POST">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check form-switch me-2">
+                                        <input class="form-check-input" type="checkbox" 
+                                               {{ $dish->is_available ? 'checked' : '' }} disabled>
+                                    </div>
+                                    <span class="badge bg-{{ $dish->is_available ? 'success' : 'danger' }} bg-opacity-75">
+                                        {{ $dish->is_available ? 'Available' : 'Not Available' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('admin.dishes.edit', $dish) }}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Edit Dish">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ route('admin.dishes.destroy', $dish) }}" 
+                                          method="POST" 
+                                          class="d-inline">
                                         @csrf
-                                        @method('PUT')
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Edit Dish</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label class="form-label">Name</label>
-                                                <input type="text" name="name" class="form-control" value="{{ $dish->name }}" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Description</label>
-                                                <textarea name="description" class="form-control" rows="3">{{ $dish->description }}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Price</label>
-                                                <input type="number" name="price" class="form-control" value="{{ $dish->price }}" step="0.01" min="0" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Category</label>
-                                                <select name="category" class="form-select" required>
-                                                    <option value="appetizer" {{ $dish->category === 'appetizer' ? 'selected' : '' }}>Appetizer</option>
-                                                    <option value="main" {{ $dish->category === 'main' ? 'selected' : '' }}>Main Course</option>
-                                                    <option value="dessert" {{ $dish->category === 'dessert' ? 'selected' : '' }}>Dessert</option>
-                                                    <option value="beverage" {{ $dish->category === 'beverage' ? 'selected' : '' }}>Beverage</option>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="form-check">
-                                                    <input type="checkbox" name="is_available" class="form-check-input" value="1" {{ $dish->is_available ? 'checked' : '' }}>
-                                                    <label class="form-check-label">Available</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                                        </div>
+                                        @method('DELETE')
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Delete Dish"
+                                                onclick="return confirm('Are you sure you want to delete {{ $dish->name }}?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </form>
                                 </div>
-                            </div>
-                        </div>
+                            </td>
+                        </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-3">No dishes found</td>
+                            <td colspan="4" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-utensils fa-3x mb-3 opacity-50"></i>
+                                    <p class="mb-0 h6">No dishes found</p>
+                                    <p class="small text-muted">Start by adding your first dish to the menu</p>
+                                </div>
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="card-footer">
-            {{ $dishes->links() }}
+
+        <div class="card-footer bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6 small text-muted">
+                    Showing {{ $dishes->firstItem() ?? 0 }} to {{ $dishes->lastItem() ?? 0 }} of {{ $dishes->total() ?? 0 }} dishes
+                </div>
+                <div class="col-md-6">
+                    {{ $dishes->links() }}
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Add New Dish Modal -->
-<div class="modal fade" id="addDishModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="{{ route('admin.dishes.store') }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Dish</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Price</label>
-                        <input type="number" name="price" class="form-control" step="0.01" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Category</label>
-                        <select name="category" class="form-select" required>
-                            <option value="appetizer">Appetizer</option>
-                            <option value="main">Main Course</option>
-                            <option value="dessert">Dessert</option>
-                            <option value="beverage">Beverage</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" name="is_available" class="form-check-input" value="1" checked>
-                            <label class="form-check-label">Available</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Dish</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<style>
+/* Card Styles */
+.card {
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.05);
+}
+
+/* Table Styles */
+.table > :not(:first-child) {
+    border-top: none;
+}
+
+.table > tbody > tr:hover {
+    background-color: rgba(0,0,0,.02);
+    transition: background-color 0.2s ease;
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: #555;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Button Styles */
+.btn-outline-primary, .btn-outline-danger {
+    border-width: 1px;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover, .btn-outline-danger:hover {
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Form Switch Styles */
+.form-check-input:checked {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+}
+
+/* Badge Styles */
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+}
+
+/* Pagination Styles */
+.pagination {
+    margin-bottom: 0;
+    justify-content: center;
+}
+
+@media (min-width: 768px) {
+    .pagination {
+        justify-content: flex-end;
+    }
+}
+
+.page-link {
+    padding: 0.375rem 0.75rem;
+    color: var(--bs-primary);
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    font-size: 0.875rem;
+}
+
+.page-link:hover {
+    color: var(--bs-primary);
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Alert Styles */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+/* Responsive Improvements */
+@media (max-width: 576px) {
+    .table td {
+        padding: 1rem 0.5rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
 @endsection

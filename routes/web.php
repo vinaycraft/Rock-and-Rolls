@@ -1,13 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Admin\AnalyticsController;
-use App\Http\Controllers\MenuController;
+use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DishController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,69 +19,66 @@ use App\Http\Controllers\ProfileController;
 |--------------------------------------------------------------------------
 */
 
-// Admin Routes
-Route::prefix('admin')->group(function () {
-    // Guest admin routes
-    Route::middleware('guest:admin')->group(function () {
-        Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
-        Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
-        Route::get('/forgot-password', [AdminAuthController::class, 'showForgotPassword'])->name('admin.password.request');
-        Route::post('/forgot-password', [AdminAuthController::class, 'sendResetLink'])->name('admin.password.email');
-    });
-    
-    // Protected admin routes
-    Route::middleware(['auth:admin'])->group(function () {
-        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('admin.dashboard');
-        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
-    });
-});
-
-// Customer Routes
-// Guest routes
+// Guest Routes
 Route::middleware('guest')->group(function () {
-    Route::get('/', function () {
-        return view('welcome');
-    })->name('home');
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('customer.login');
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    // Registration Routes
+    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [RegisterController::class, 'register']);
+
+    // Login Routes
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+
+    // Password Reset Routes
+    Route::get('/forgot-password', [LoginController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [LoginController::class, 'sendResetLink'])->name('password.email');
 });
 
-// Protected customer routes
+// Admin Routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin Guest Routes
+    Route::middleware('guest:admin')->group(function () {
+        Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
+        Route::get('/forgot-password', [AdminAuthController::class, 'showForgotPasswordForm'])->name('password.request');
+        Route::post('/forgot-password', [AdminAuthController::class, 'sendResetLink'])->name('password.email');
+    });
+
+    // Protected Admin Routes
+    Route::middleware('auth:admin')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+        Route::resource('dishes', DishController::class);
+        Route::resource('orders', AdminOrderController::class);
+        Route::post('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+    });
+});
+
+// Protected Customer Routes
 Route::middleware('auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    
+    // Logout Route
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
     // Menu Routes
+    Route::get('/', [MenuController::class, 'index'])->name('menu');
     Route::get('/menu', [MenuController::class, 'index'])->name('menu');
     
+    // Cart Routes
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{dish}', [CartController::class, 'addToCart'])->name('cart.add');
+    Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    
+    // Order Routes
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // Cart Routes
-    Route::get('/cart', [CartController::class, 'index'])->name('cart');
-    Route::post('/cart/add/{dish}', [CartController::class, 'add'])->name('cart.add');
-    Route::delete('/cart/remove/{dish}', [CartController::class, 'remove'])->name('cart.remove');
-    
-    // Order Routes
-    Route::get('/my-orders', [OrderController::class, 'index'])->name('my-orders');
-    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-    Route::get('/orders', function () {
-        return view('orders');
-    })->name('orders');
-});
-
-// Public Routes
-Route::get('/', function () {
-    if (auth()->check() && auth()->user()->is_admin) {
-        return redirect()->route('admin.dashboard');
-    }
-    return redirect()->route('menu');
 });

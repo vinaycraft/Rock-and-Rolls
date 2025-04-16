@@ -1,60 +1,81 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container py-4">
     <h2 class="mb-4">My Orders</h2>
 
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if($orders->count() > 0)
-        @foreach($orders as $order)
-            <div class="card mb-4">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span>Order #{{ $order->id }}</span>
-                        <span class="badge bg-{{ $order->status === 'delivered' ? 'success' : 
-                            ($order->status === 'preparing' ? 'warning' : 
-                            ($order->status === 'ready' ? 'info' : 'secondary')) }}">
-                            {{ ucfirst($order->status) }}
-                        </span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th>Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+        <div class="row">
+            @foreach($orders as $order)
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Order #{{ $order->id }}</h5>
+                                <span class="badge bg-{{ $order->status === 'pending' ? 'warning' : ($order->status === 'completed' ? 'success' : 'danger') }}">
+                                    {{ ucfirst($order->status) }}
+                                </span>
+                            </div>
+
+                            <p class="text-muted mb-3">
+                                Placed on: {{ $order->created_at->format('M d, Y H:i A') }}
+                            </p>
+
+                            <div class="mb-3">
                                 @foreach($order->items as $item)
-                                    <tr>
-                                        <td>{{ $item->dish->name }}</td>
-                                        <td>{{ $item->quantity }}</td>
-                                        <td>₹{{ number_format($item->price, 2) }}</td>
-                                        <td>₹{{ number_format($item->price * $item->quantity, 2) }}</td>
-                                    </tr>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{{ $item->dish->name }} x {{ $item->quantity }}</span>
+                                        <span>₹{{ number_format($item->subtotal, 2) }}</span>
+                                    </div>
                                 @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                                    <td><strong>₹{{ number_format($order->total_amount, 2) }}</strong></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <div class="text-muted">
-                        Ordered on: {{ $order->created_at->format('M d, Y H:i A') }}
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Total:</h6>
+                                <h6 class="mb-0">₹{{ number_format($order->total, 2) }}</h6>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('orders.show', $order) }}" class="btn btn-primary flex-grow-1">
+                                    View Details
+                                </a>
+                                @if($order->status === 'pending')
+                                    <form action="{{ route('orders.cancel', $order) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-danger">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
     @else
-        <div class="alert alert-info">
-            You haven't placed any orders yet. <a href="{{ route('menu') }}">Start ordering</a>
+        <div class="text-center py-5">
+            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+            <h3>No orders yet</h3>
+            <p class="text-muted">You haven't placed any orders yet.</p>
+            <a href="{{ route('menu') }}" class="btn btn-primary">
+                Browse Menu
+            </a>
         </div>
     @endif
 </div>

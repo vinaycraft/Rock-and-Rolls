@@ -11,10 +11,13 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            $table->foreignId('dish_id')->constrained()->onDelete('cascade');
+            $table->foreignId('dish_id')->constrained('dishes')->onDelete('restrict');
             $table->integer('quantity');
-            $table->decimal('price', 10, 2);
+            $table->boolean('has_cheese')->default(false);
+            $table->decimal('price', 8, 2);
+            $table->string('dish_name')->nullable(); // Store dish name at time of order
             $table->timestamps();
+            $table->softDeletes(); // Handle soft deletes
         });
     }
 
